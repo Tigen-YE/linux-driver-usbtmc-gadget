@@ -164,7 +164,7 @@ static struct usb_interface_descriptor tmc_interface_desc = {
 	.bInterfaceSubClass     = 0x03,
 	.bInterfaceProtocol     = 0,
 };
-// USB端点描述符 - 高速输入
+// USB端点描述符 - 高速输入 - 向Host发送数据
 static struct usb_endpoint_descriptor tmc_highspeed_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -172,7 +172,7 @@ static struct usb_endpoint_descriptor tmc_highspeed_in_desc = {
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
-// USB端点描述符 - 高速输出
+// USB端点描述符 - 高速输出 - 从Host接收数据
 static struct usb_endpoint_descriptor tmc_highspeed_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -189,14 +189,14 @@ static struct usb_endpoint_descriptor tmc_highspeed_int_in_desc = {
 	.wMaxPacketSize         = __constant_cpu_to_le16(64),
 	.bInterval              = 2,
 };
-// USB端点描述符 - 全速输入
+// USB端点描述符 - 全速输入 - 向Host发送数据
 static struct usb_endpoint_descriptor tmc_fullspeed_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
 	.bEndpointAddress       = USB_DIR_IN,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 };
-// USB端点描述符 - 全速输出
+// USB端点描述符 - 全速输出 - 从Host接收数据
 static struct usb_endpoint_descriptor tmc_fullspeed_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -251,7 +251,7 @@ static struct usb_request *tmc_request_new(struct usb_ep *ep, int buffer_size)
 
 	return req;
 }
-
+// 释放掉分配的request的空间
 static void tmc_request_free(struct usb_request *req, struct usb_ep *ep)
 {
 	if (req) 
@@ -260,7 +260,7 @@ static void tmc_request_free(struct usb_request *req, struct usb_ep *ep)
 		usb_ep_free_request(ep, req);
 	}
 }
-
+// tmc资源锁 - 维护首发队列资源
 static inline int tmc_lock(atomic_t *excl)
 {
 	if (atomic_inc_return(excl) == 1) 
@@ -278,7 +278,7 @@ static inline void tmc_unlock(atomic_t *excl)
 {
 	atomic_dec(excl);
 }
-
+// 将一个请求放到收/发队列当中
 void tmc_req_put(struct tmc_dev *dev, struct list_head *head,
 		struct usb_request *req)
 {
@@ -288,7 +288,7 @@ void tmc_req_put(struct tmc_dev *dev, struct list_head *head,
 	list_add_tail(&req->list, head);
 	spin_unlock_irqrestore(&dev->lock, flags);
 }
-
+// 从收/发队头取出一个消息
 struct usb_request *tmc_req_get(struct tmc_dev *dev, struct list_head *head)
 {
 	unsigned long flags;
@@ -307,7 +307,7 @@ struct usb_request *tmc_req_get(struct tmc_dev *dev, struct list_head *head)
 	spin_unlock_irqrestore(&dev->lock, flags);
 	return req;
 }
-
+// 当ep完成对一个request的发送，就将它放到设备的tx_idle队列当中并唤醒write_wq任务
 static void tmc_complete_in(struct usb_ep *ep, struct usb_request *req)
 {
 	struct tmc_dev *dev = _tmc_dev;
@@ -325,7 +325,7 @@ static void tmc_complete_in(struct usb_ep *ep, struct usb_request *req)
 	tmc_req_put(dev, &dev->tx_idle, req);
 	wake_up(&dev->write_wq);
 }
-
+// 当ep完成一个数据的接收，就唤醒read_wq任务
 static void tmc_complete_out(struct usb_ep *ep, struct usb_request *req)
 {
 	struct tmc_dev *dev = _tmc_dev;
@@ -344,7 +344,7 @@ static void tmc_complete_out(struct usb_ep *ep, struct usb_request *req)
 	wake_up(&dev->read_wq);
 	//printk("%s:receive data done2\n", __func__);
 }
-
+// 当int端点完成一次输入，就唤醒int_in_wq任务
 static void tmc_complete_int_in(struct usb_ep *ep, struct usb_request *req)
 {
 	struct tmc_dev *dev = _tmc_dev;
@@ -362,7 +362,7 @@ static void tmc_complete_int_in(struct usb_ep *ep, struct usb_request *req)
 	wake_up(&dev->int_in_wq);
 }
 
-
+// 根据传入的端点描述符，创建对应的端点实体并存入tmc设备结构体中
 static int tmc_create_bulk_endpoints(struct tmc_dev *dev,
 				struct usb_endpoint_descriptor *in_desc,
 				struct usb_endpoint_descriptor *out_desc,
@@ -466,7 +466,7 @@ static int tmc_queue_req(struct usb_ep *ep,
 
 	return ret;
 }
-
+// 
 static ssize_t tmc_read(struct file *fp, char __user *buf,
 				size_t count, loff_t *pos)
 {
