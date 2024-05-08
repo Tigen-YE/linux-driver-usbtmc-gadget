@@ -154,7 +154,7 @@ static volatile const USB_TMC_Capabilities USB_TMC_CAPABILITIES = {
 	{0,0,0,0,0,0,0,0}
 };
 
-
+// USB接口描述符
 static struct usb_interface_descriptor tmc_interface_desc = {
 	.bLength                = USB_DT_INTERFACE_SIZE,
 	.bDescriptorType        = USB_DT_INTERFACE,
@@ -164,7 +164,7 @@ static struct usb_interface_descriptor tmc_interface_desc = {
 	.bInterfaceSubClass     = 0x03,
 	.bInterfaceProtocol     = 0,
 };
-
+// USB端点描述符 - 高速输入
 static struct usb_endpoint_descriptor tmc_highspeed_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -172,7 +172,7 @@ static struct usb_endpoint_descriptor tmc_highspeed_in_desc = {
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
-
+// USB端点描述符 - 高速输出
 static struct usb_endpoint_descriptor tmc_highspeed_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -180,7 +180,7 @@ static struct usb_endpoint_descriptor tmc_highspeed_out_desc = {
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
-
+// USB端点描述符 - 高速初始化输入
 static struct usb_endpoint_descriptor tmc_highspeed_int_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -189,28 +189,28 @@ static struct usb_endpoint_descriptor tmc_highspeed_int_in_desc = {
 	.wMaxPacketSize         = __constant_cpu_to_le16(64),
 	.bInterval              = 2,
 };
-
+// USB端点描述符 - 全速输入
 static struct usb_endpoint_descriptor tmc_fullspeed_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
 	.bEndpointAddress       = USB_DIR_IN,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 };
-
+// USB端点描述符 - 全速输出
 static struct usb_endpoint_descriptor tmc_fullspeed_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
 	.bEndpointAddress       = USB_DIR_OUT,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 };
-
+// USB端点描述符 - 全速初始化输入
 static struct usb_endpoint_descriptor tmc_fullspeed_int_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
 	.bEndpointAddress       = USB_DIR_IN,
 	.bmAttributes           = USB_ENDPOINT_XFER_INT,
 };
-
+// USB描述符整合 - 全速描述符
 static struct usb_descriptor_header *fs_tmc_descs[] = {
 	(struct usb_descriptor_header *) &tmc_interface_desc,
 	(struct usb_descriptor_header *) &tmc_fullspeed_in_desc,
@@ -218,7 +218,7 @@ static struct usb_descriptor_header *fs_tmc_descs[] = {
 	(struct usb_descriptor_header *) &tmc_fullspeed_int_in_desc,
 	NULL,
 };
-
+// USB描述符整合 - 高速描述符
 static struct usb_descriptor_header *hs_tmc_descs[] = {
 	(struct usb_descriptor_header *) &tmc_interface_desc,
 	(struct usb_descriptor_header *) &tmc_highspeed_in_desc,
@@ -226,14 +226,14 @@ static struct usb_descriptor_header *hs_tmc_descs[] = {
 	(struct usb_descriptor_header *) &tmc_highspeed_int_in_desc,
 	NULL,
 };
-static struct tmc_dev *_tmc_dev;
+static struct tmc_dev *_tmc_dev;	// tmc设备指针
 
 static inline struct tmc_dev *func_to_tmc(struct usb_function *f)
 {
 	return container_of(f, struct tmc_dev, function);
 }
 
-
+// 为端点分配空间实体，创建一个新的request对象
 static struct usb_request *tmc_request_new(struct usb_ep *ep, int buffer_size)
 {
 	struct usb_request *req = usb_ep_alloc_request(ep, GFP_KERNEL);
